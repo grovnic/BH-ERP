@@ -4,7 +4,12 @@ let currentTenant = null;
 
 // Provjeri da li je korisnik ulogovan
 async function checkAuth() {
-    const { data: { user } } = await supabase.auth.getUser();
+    if (!supabaseClient) {
+        console.error('Supabase klijent nije inicijalizovan!');
+        return null;
+    }
+
+    const { data: { user } } = await supabaseClient.auth.getUser();
 
     if (!user) {
         window.location.href = 'login.html';
@@ -12,7 +17,7 @@ async function checkAuth() {
     }
 
     // Dohvati podatke o korisniku i tenantu
-    const { data: userData, error } = await supabase
+    const { data: userData, error } = await supabaseClient
         .from('users')
         .select(`
             *,
@@ -22,7 +27,8 @@ async function checkAuth() {
         .single();
 
     if (error || !userData) {
-        await supabase.auth.signOut();
+        console.error('Greška pri učitavanju korisnika:', error);
+        await supabaseClient.auth.signOut();
         window.location.href = 'login.html';
         return null;
     }
@@ -30,7 +36,7 @@ async function checkAuth() {
     // Provjeri da li je tenant odobren
     if (!userData.tenants.approved && userData.role !== 'super_admin') {
         showMessage('Vaš nalog čeka odobrenje administratora.', 'warning');
-        await supabase.auth.signOut();
+        await supabaseClient.auth.signOut();
         window.location.href = 'login.html';
         return null;
     }
@@ -43,7 +49,12 @@ async function checkAuth() {
 
 // Login funkcija
 async function login(email, password) {
-    const { data, error } = await supabase.auth.signInWithPassword({
+    if (!supabaseClient) {
+        showMessage('Greška: Konekcija sa bazom nije uspostavljena.', 'error');
+        return false;
+    }
+
+    const { data, error } = await supabaseClient.auth.signInWithPassword({
         email: email,
         password: password
     });
@@ -59,17 +70,29 @@ async function login(email, password) {
 
 // Registracija nove firme
 async function register(formData) {
+    if (!supabaseClient) {
+        showMessage('Greška: Konekcija sa bazom nije uspostavljena.', 'error');
+        return false;
+    }
+
     try {
+        console.log('Pokušavam registraciju...', formData);
+
         // 1. Kreiraj Auth korisnika
-        const { data: authData, error: authError } = await supabase.auth.signUp({
+        const { data: authData, error: authError } = await supabaseClient.auth.signUp({
             email: formData.email,
             password: formData.password
         });
 
-        if (authError) throw authError;
+        if (authError) {
+            console.error('Auth greška:', authError);
+            throw authError;
+        }
+
+        console.log('Auth korisnik kreiran:', authData);
 
         // 2. Kreiraj tenant (firma)
-        const { data: tenant, error: tenantError } = await supabase
+        const { data: tenant, error: tenantError } = await supabaseClient
             .from('tenants')
             .insert({
                 naziv: formData.company_name,
@@ -83,10 +106,15 @@ async function register(formData) {
             .select()
             .single();
 
-        if (tenantError) throw tenantError;
+        if (tenantError) {
+            console.error('Tenant greška:', tenantError);
+            throw tenantError;
+        }
+
+        console.log('Tenant kreiran:', tenant);
 
         // 3. Kreiraj user zapis
-        const { error: userError } = await supabase
+        const { error: userError } = await supabaseClient
             .from('users')
             .insert({
                 id: authData.user.id,
@@ -96,7 +124,12 @@ async function register(formData) {
                 email: formData.email
             });
 
-        if (userError) throw userError;
+        if (userError) {
+            console.error('User greška:', userError);
+            throw userError;
+        }
+
+        console.log('User zapis kreiran');
 
         showMessage('Registracija uspješna! Čekajte odobrenje administratora.', 'success');
         setTimeout(() => {
@@ -105,6 +138,7 @@ async function register(formData) {
 
         return true;
     } catch (error) {
+        console.error('Greška pri registraciji:', error);
         showMessage('Greška pri registraciji: ' + error.message, 'error');
         return false;
     }
@@ -112,7 +146,9 @@ async function register(formData) {
 
 // Logout
 async function logout() {
-    await supabase.auth.signOut();
+    if (supabaseClient) {
+        await supabaseClient.auth.signOut();
+    }
     window.location.href = 'login.html';
 }
 

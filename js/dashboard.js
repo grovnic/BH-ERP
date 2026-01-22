@@ -31,7 +31,7 @@ async function loadDashboardStats() {
         const lastDayOfMonth = new Date(today.getFullYear(), today.getMonth() + 1, 0);
 
         // Ukupna prodaja ovog mjeseca
-        const { data: invoices } = await supabase
+        const { data: invoices } = await supabaseClient
             .from('fakture')
             .select('ukupno_sa_pdv, status, tip')
             .eq('tenant_id', currentTenant.id)
@@ -44,14 +44,14 @@ async function loadDashboardStats() {
         const unpaidInvoices = invoices?.filter(inv => inv.status === 'kreirana' || inv.status === 'poslata').length || 0;
 
         // Broj partnera
-        const { count: partnersCount } = await supabase
+        const { count: partnersCount } = await supabaseClient
             .from('partneri')
             .select('*', { count: 'exact', head: true })
             .eq('tenant_id', currentTenant.id)
             .eq('aktivan', true);
 
         // Broj artikala
-        const { count: articlesCount } = await supabase
+        const { count: articlesCount } = await supabaseClient
             .from('artikli')
             .select('*', { count: 'exact', head: true })
             .eq('tenant_id', currentTenant.id)
@@ -88,12 +88,12 @@ function displayStats() {
 // Učitaj najnovije fakture
 async function loadRecentInvoices() {
     try {
-        const { data: invoices } = await supabase
+        const { data: invoices } = await supabaseClient
             .from('fakture')
-            .select(`
+            .select(\`
                 *,
                 partneri (naziv)
-            `)
+            \`)
             .eq('tenant_id', currentTenant.id)
             .order('datum', { ascending: false })
             .limit(5);
@@ -116,15 +116,15 @@ function displayRecentInvoices() {
     }
 
     dashboardData.recentInvoices.forEach(invoice => {
-        const row = `
+        const row = \`
             <tr>
-                <td>${invoice.broj_fakture}</td>
-                <td>${invoice.partneri.naziv}</td>
-                <td>${formatDate(invoice.datum)}</td>
-                <td>${invoice.ukupno_sa_pdv.toFixed(2)} BAM</td>
-                <td><span class="status-badge status-${invoice.status}">${invoice.status}</span></td>
+                <td>\${invoice.broj_fakture}</td>
+                <td>\${invoice.partneri.naziv}</td>
+                <td>\${formatDate(invoice.datum)}</td>
+                <td>\${invoice.ukupno_sa_pdv.toFixed(2)} BAM</td>
+                <td><span class="status-badge status-\${invoice.status}">\${invoice.status}</span></td>
             </tr>
-        `;
+        \`;
         tbody.innerHTML += row;
     });
 }
@@ -132,12 +132,12 @@ function displayRecentInvoices() {
 // Učitaj artikle sa malim stanjem
 async function loadLowStockItems() {
     try {
-        const { data: items } = await supabase
+        const { data: items } = await supabaseClient
             .from('artikli')
             .select('*')
             .eq('tenant_id', currentTenant.id)
             .eq('aktivan', true)
-            .filter('stanje_lagera', 'lte', 'min_stanje')
+            .lte('stanje_lagera', supabaseClient.raw('min_stanje'))
             .order('stanje_lagera', { ascending: true })
             .limit(10);
 
@@ -159,14 +159,14 @@ function displayLowStockItems() {
     }
 
     dashboardData.lowStock.forEach(item => {
-        const row = `
+        const row = \`
             <tr>
-                <td>${item.sifra}</td>
-                <td>${item.naziv}</td>
-                <td>${item.stanje_lagera}</td>
-                <td>${item.min_stanje}</td>
+                <td>\${item.sifra}</td>
+                <td>\${item.naziv}</td>
+                <td>\${item.stanje_lagera}</td>
+                <td>\${item.min_stanje}</td>
             </tr>
-        `;
+        \`;
         tbody.innerHTML += row;
     });
 }
@@ -178,7 +178,7 @@ async function loadSalesChart() {
         const sevenDaysAgo = new Date(today);
         sevenDaysAgo.setDate(today.getDate() - 7);
 
-        const { data: invoices } = await supabase
+        const { data: invoices } = await supabaseClient
             .from('fakture')
             .select('datum, ukupno_sa_pdv')
             .eq('tenant_id', currentTenant.id)
@@ -216,7 +216,7 @@ function displaySalesChart() {
 
     const table = document.createElement('table');
     table.style.width = '100%';
-    table.innerHTML = `
+    table.innerHTML = \`
         <thead>
             <tr>
                 <th>Datum</th>
@@ -224,14 +224,14 @@ function displaySalesChart() {
             </tr>
         </thead>
         <tbody>
-            ${dashboardData.salesChart.map(item => `
+            \${dashboardData.salesChart.map(item => \`
                 <tr>
-                    <td>${formatDate(item.date)}</td>
-                    <td style="text-align: right;">${item.total.toFixed(2)}</td>
+                    <td>\${formatDate(item.date)}</td>
+                    <td style="text-align: right;">\${item.total.toFixed(2)}</td>
                 </tr>
-            `).join('')}
+            \`).join('')}
         </tbody>
-    `;
+    \`;
 
     container.appendChild(table);
 }
