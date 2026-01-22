@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html lang="bs">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Prijava - ERP BiH</title>
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body class="auth-page">
+    <div class="auth-container">
+        <div class="auth-box">
+            <h1 data-i18n="app_name">ERP BiH</h1>
+            <h2 data-i18n="login">Prijava</h2>
+
+            <div class="language-switcher">
+                <button onclick="changeLanguage('bs')" class="btn-lang">BS</button>
+                <button onclick="changeLanguage('en')" class="btn-lang">EN</button>
+            </div>
+
+            <form id="loginForm">
+                <div class="form-group">
+                    <label data-i18n="email">Email</label>
+                    <input type="email" id="email" required data-i18n-placeholder="email">
+                </div>
+
+                <div class="form-group">
+                    <label data-i18n="password">Lozinka</label>
+                    <input type="password" id="password" required data-i18n-placeholder="password">
+                </div>
+
+                <button type="submit" class="btn btn-primary" data-i18n="login">Prijava</button>
+            </form>
+
+            <p class="auth-link">
+                <span data-i18n="no_account">Nemate nalog?</span>
+                <a href="register.html" data-i18n="register">Registracija</a>
+            </p>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="js/config.js"></script>
+    <script src="js/i18n.js"></script>
+    <script src="js/auth.js"></script>
+    <script>
+        // Provjeri da li je već ulogovan
+        supabase.auth.getSession().then(({ data: { session } }) => {
+            if (session) {
+                window.location.href = 'dashboard.html';
+            }
+        });
+
+        // Login form submit
+        document.getElementById('loginForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const email = document.getElementById('email').value;
+            const password = document.getElementById('password').value;
+            await login(email, password);
+        });
+    </script>
+</body>
+</html>
