@@ -11,71 +11,86 @@
         <div class="auth-box">
             <h1 data-i18n="app_name">ERP BiH</h1>
             <h2 data-i18n="register">Registracija</h2>
-
+            
             <div class="language-switcher">
                 <button onclick="changeLanguage('bs')" class="btn-lang">BS</button>
                 <button onclick="changeLanguage('en')" class="btn-lang">EN</button>
             </div>
-
+            
             <form id="registerForm">
                 <div class="form-group">
                     <label data-i18n="name">Ime i prezime</label>
                     <input type="text" id="name" required>
                 </div>
-
+                
                 <div class="form-group">
                     <label data-i18n="company_name">Naziv firme</label>
                     <input type="text" id="company_name" required>
                 </div>
-
+                
                 <div class="form-group">
                     <label data-i18n="pib">PIB</label>
                     <input type="text" id="pib">
                 </div>
-
+                
                 <div class="form-group">
                     <label data-i18n="address">Adresa</label>
                     <input type="text" id="address">
                 </div>
-
+                
                 <div class="form-group">
                     <label data-i18n="city">Grad</label>
                     <input type="text" id="city">
                 </div>
-
+                
                 <div class="form-group">
                     <label data-i18n="phone">Telefon</label>
                     <input type="tel" id="phone">
                 </div>
-
+                
                 <div class="form-group">
                     <label data-i18n="email">Email</label>
                     <input type="email" id="email" required>
                 </div>
-
+                
                 <div class="form-group">
                     <label data-i18n="password">Lozinka</label>
                     <input type="password" id="password" required minlength="6">
                 </div>
-
+                
                 <button type="submit" class="btn btn-primary" data-i18n="register">Registracija</button>
             </form>
-
+            
             <p class="auth-link">
                 <span data-i18n="have_account">Već imate nalog?</span>
                 <a href="login.html" data-i18n="login">Prijava</a>
             </p>
         </div>
     </div>
-
+    
+    <!-- PRVO učitaj Supabase biblioteku -->
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    
+    <!-- ZATIM učitaj config -->
     <script src="js/config.js"></script>
+    
+    <!-- ZATIM inicijalizuj klijenta -->
+    <script>
+        // Inicijalizuj Supabase klijenta OVDJE
+        const { createClient } = supabase;
+        const supabase = createClient(CONFIG.SUPABASE_URL, CONFIG.SUPABASE_ANON_KEY);
+        
+        console.log('Supabase inicijalizovan:', supabase ? 'DA' : 'NE');
+    </script>
+    
+    <!-- SADA učitaj ostale skripte -->
     <script src="js/i18n.js"></script>
     <script src="js/auth.js"></script>
+    
     <script>
         document.getElementById('registerForm').addEventListener('submit', async (e) => {
             e.preventDefault();
-
+            
             const formData = {
                 name: document.getElementById('name').value,
                 company_name: document.getElementById('company_name').value,
@@ -86,7 +101,7 @@
                 email: document.getElementById('email').value,
                 password: document.getElementById('password').value
             };
-
+            
             await register(formData);
         });
     </script>
