@@ -1,106 +1,60 @@
-<!DOCTYPE html>
-<html lang="bs">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Registracija - ERP BiH</title>
-    <link rel="stylesheet" href="css/style.css">
-</head>
-<body class="auth-page">
-    <div class="auth-container">
-        <div class="auth-box">
-            <h1 data-i18n="app_name">ERP BiH</h1>
-            <h2 data-i18n="register">Registracija</h2>
-
-            <div class="language-switcher">
-                <button onclick="changeLanguage('bs')" class="btn-lang">BS</button>
-                <button onclick="changeLanguage('en')" class="btn-lang">EN</button>
-            </div>
-
-            <form id="registerForm">
-                <div class="form-group">
-                    <label data-i18n="name">Ime i prezime</label>
-                    <input type="text" id="name" required>
-                </div>
-
-                <div class="form-group">
-                    <label data-i18n="company_name">Naziv firme</label>
-                    <input type="text" id="company_name" required>
-                </div>
-
-                <div class="form-group">
-                    <label data-i18n="pib">PIB</label>
-                    <input type="text" id="pib">
-                </div>
-
-                <div class="form-group">
-                    <label data-i18n="address">Adresa</label>
-                    <input type="text" id="address">
-                </div>
-
-                <div class="form-group">
-                    <label data-i18n="city">Grad</label>
-                    <input type="text" id="city">
-                </div>
-
-                <div class="form-group">
-                    <label data-i18n="phone">Telefon</label>
-                    <input type="tel" id="phone">
-                </div>
-
-                <div class="form-group">
-                    <label data-i18n="email">Email</label>
-                    <input type="email" id="email" required>
-                </div>
-
-                <div class="form-group">
-                    <label data-i18n="password">Lozinka</label>
-                    <input type="password" id="password" required minlength="6">
-                </div>
-
-                <button type="submit" class="btn btn-primary" data-i18n="register">Registracija</button>
-            </form>
-
-            <p class="auth-link">
-                <span data-i18n="have_account">Već imate nalog?</span>
-                <a href="login.html" data-i18n="login">Prijava</a>
-            </p>
-        </div>
-    </div>
-
-    <!-- Učitaj biblioteke i inicijalizuj REDOSLIJEDOM -->
-    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-    <script src="js/config.js"></script>
-    <script>
-        // Inicijalizuj Supabase klijenta
-        console.log('Supabase library:', typeof supabase);
-        console.log('Config URL:', CONFIG.SUPABASE_URL);
-
-        const { createClient } = supabase;
-        supabaseClient = createClient(CONFIG.SUPABASE_URL, CONFIG.SUPABASE_ANON_KEY);
-
-        console.log('Supabase klijent kreiran:', supabaseClient);
-    </script>
-    <script src="js/i18n.js"></script>
-    <script src="js/auth.js"></script>
-    <script>
-        document.getElementById('registerForm').addEventListener('submit', async (e) => {
-            e.preventDefault();
-
-            const formData = {
-                name: document.getElementById('name').value,
-                company_name: document.getElementById('company_name').value,
-                pib: document.getElementById('pib').value,
-                address: document.getElementById('address').value,
-                city: document.getElementById('city').value,
-                phone: document.getElementById('phone').value,
-                email: document.getElementById('email').value,
-                password: document.getElementById('password').value
-            };
-
-            console.log('Form data:', formData);
-            await register(formData);
+<script>
+document.getElementById('registerForm').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    
+    console.log('=== DEBUG START ===');
+    console.log('Supabase Client:', supabaseClient);
+    console.log('Config URL:', CONFIG.SUPABASE_URL);
+    console.log('Config Key (first 20 chars):', CONFIG.SUPABASE_ANON_KEY.substring(0, 20));
+    
+    // TEST 1: Provjeri konekciju
+    try {
+        const { data, error } = await supabaseClient
+            .from('tenants')
+            .select('count')
+            .limit(1);
+        console.log('✅ Konekcija sa bazom radi!', data, error);
+    } catch (err) {
+        console.error('❌ Konekcija sa bazom NE RADI:', err);
+        showMessage('Greška konekcije: ' + err.message, 'error');
+        return;
+    }
+    
+    // TEST 2: Pokušaj signup
+    const formData = {
+        name: document.getElementById('name').value,
+        company_name: document.getElementById('company_name').value,
+        pib: document.getElementById('pib').value,
+        address: document.getElementById('address').value,
+        city: document.getElementById('city').value,
+        phone: document.getElementById('phone').value,
+        email: document.getElementById('email').value,
+        password: document.getElementById('password').value
+    };
+    
+    console.log('Form data:', formData);
+    
+    try {
+        console.log('Pokušavam signUp...');
+        const { data: authData, error: authError } = await supabaseClient.auth.signUp({
+            email: formData.email,
+            password: formData.password
         });
-    </script>
-</body>
-</html>
+        
+        if (authError) {
+            console.error('❌ Auth Error:', authError);
+            showMessage('Auth greška: ' + authError.message, 'error');
+            return;
+        }
+        
+        console.log('✅ Auth Success:', authData);
+        showMessage('Registracija uspješna! Provjerite email za potvrdu.', 'success');
+        
+    } catch (err) {
+        console.error('❌ Catch Error:', err);
+        showMessage('Greška: ' + err.message, 'error');
+    }
+    
+    console.log('=== DEBUG END ===');
+});
+</script>
